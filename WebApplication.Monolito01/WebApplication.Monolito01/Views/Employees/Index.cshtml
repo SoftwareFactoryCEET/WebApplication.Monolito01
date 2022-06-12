@@ -1,0 +1,63 @@
+﻿@model IEnumerable<Employee>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+@if(TempData["ResultOk"] != null ){
+    <h1 class="alert-success">@TempData["ResultOk"]</h1>
+}
+
+<div class="container box-shadow p-5">
+    <h1 class="text-center mb-3">Operaciones CRUD usando .Net Core 6 y Entity Framework Core</h1>
+
+    <div class="col mb-3">
+        <a aps-controller = "Employees" asp-action= "Create" class="btn btn-lg btn-primary">
+            <i class="bi bi-file-plus-fill"></i>
+            Adicionar empleado
+        </a>
+    </div>
+
+    <table class="table table-bordered table-hover" >
+        <thead>
+            <tr>
+                <th scope="col">Nombre Empleado</th>
+                <th scope="col">Cargo</th>
+                <th scope="col">Dirección</th>
+                <th scope="col">Fecha C.</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var item in Model)
+            {
+                <tr>
+                    <td width="20%">@item.Name</td>
+                    <td width="20%">@item.Designation</td>
+                    <td width="25%">@item.Adress</td>
+                    <td width="20%">@item.RecordCreation</td>              
+
+                    <td>
+                        <div role="group" class="w-60 btn-group">
+                            <a asp-controller="Employees" 
+                                asp-action="Edit" 
+                                asp-route-id="@item.Id" 
+                                class="btn btn-sm btn-primary">
+                                <i class="bi bi-pencil-square"></i>
+                                Editar
+                            </a>&nbsp;
+
+                            <a asp-controller="Employees" 
+                                asp-action="Delete" 
+                                asp-route-id="@item.Id" 
+                                class="btn btn-sm btn-danger">
+                                <i class="bi bi-trash-fill"></i>
+                                Eliminar
+                            </a>
+                        </div>                        
+                    </td>
+                </tr>   
+            }
+        </tbody>
+    </table>
+</div>

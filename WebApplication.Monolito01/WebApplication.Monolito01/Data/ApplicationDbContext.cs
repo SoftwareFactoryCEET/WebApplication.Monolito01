@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using WebApplication.Monolito01.Models;
 
 namespace WebApplication.Monolito01.Data
 {
@@ -9,5 +10,7 @@ namespace WebApplication.Monolito01.Data
             : base(options)
         {
         }
+
+        public DbSet<Employee> Employees { get; set; }
     }
 }
