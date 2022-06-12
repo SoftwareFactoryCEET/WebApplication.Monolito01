@@ -12,5 +12,6 @@ namespace WebApplication.Monolito01.Data
         }
 
         public DbSet<Employee> Employees { get; set; }
+        public DbSet<UsuarioRegistrado> UsuarioRegistrado { get; set; }
     }
 }
