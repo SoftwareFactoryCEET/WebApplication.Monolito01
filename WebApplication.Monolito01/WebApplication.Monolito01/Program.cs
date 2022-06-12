@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using WebApplication.Monolito01.Data;
-
+using WebApplication.Monolito01.Services;
 
 var builder = Microsoft.AspNetCore.Builder.WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,14 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddControllersWithViews();
+
+//Email Sender
+builder.Services.AddTransient<IEmailSender, EmailSender>();
+builder.Services.Configure<EmailOptions>(builder.Configuration);
+
+//Sms Sender
+builder.Services.AddTransient<ISmsSender, SmsSender>();
+builder.Services.Configure<SmsOptions>(builder.Configuration);
 
 var app = builder.Build();
 
