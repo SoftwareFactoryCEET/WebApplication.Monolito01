@@ -12,11 +12,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
-
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
-builder.Services.AddControllersWithViews();
 
 //Email Sender
 builder.Services.AddTransient<IEmailSender, EmailSender>();
@@ -25,6 +22,10 @@ builder.Services.Configure<EmailOptions>(builder.Configuration);
 //Sms Sender
 builder.Services.AddTransient<ISmsSender, SmsSender>();
 builder.Services.Configure<SmsOptions>(builder.Configuration);
+
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 

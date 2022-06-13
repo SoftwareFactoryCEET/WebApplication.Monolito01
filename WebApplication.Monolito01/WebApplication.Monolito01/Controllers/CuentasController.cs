@@ -12,14 +12,15 @@ namespace WebApplication.Monolito01.Controllers
         private readonly UserManager<IdentityUser> _userManager;        // Manejador de Usuarios
         private readonly IEmailSender _emailSender;                     // Interfaz para manejo de Email
         private readonly SignInManager<IdentityUser> _signInManager;    // Manejador de autenticación
-
+        private readonly RoleManager<IdentityRole> _roleManager;        // Manejador de roles
 
         // Crear un constructor
-        public CuentasController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IEmailSender emailSender)
+        public CuentasController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IEmailSender emailSender, RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _emailSender = emailSender;
+            _roleManager = roleManager;
         }
 
         [HttpGet]
@@ -33,6 +34,20 @@ namespace WebApplication.Monolito01.Controllers
         public async Task<IActionResult> Registro(string? returnurl = null)
         {
             //Pendiente implementar código para crear roles.
+
+            //Para la creación de los roles
+            if (!await _roleManager.RoleExistsAsync("Administrador"))
+            {
+                //Creación de rol usuario Administrador
+                await _roleManager.CreateAsync(new IdentityRole("Administrador"));
+            }
+
+            //Para la creación de los roles
+            if (!await _roleManager.RoleExistsAsync("Registrado"))
+            {
+                //Creación de rol usuario Registrado
+                await _roleManager.CreateAsync(new IdentityRole("Registrado"));
+            }
 
             ViewData["ReturnUrl"] = returnurl;
             var registroViewModel = new RegisterViewModel();
@@ -70,20 +85,16 @@ namespace WebApplication.Monolito01.Controllers
 
                 if (resultado.Succeeded)
                 {
-                    //Pendiente agregar el usuario a rol por defecto
-
+                    // Agregar el usuario a rol por defecto
+                    await _userManager.AddToRoleAsync(usuario, "Administrador");
 
                     // Confirmación por email...
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(usuario);
                     var urlRetorno = Url.Action("ConfirmarEmail", "Cuentas", new { userId = usuario.Id, code = code }, protocol: HttpContext.Request.Scheme);
-                    await _emailSender.SendEmailAsync(
-                                                        registroViewModel.Email,
-                                                        "Confirmar su cuenta - WebApplicationsEmployess",
-                                                        "Por favor confirme su cuenta dando click aquí: <a href=\"" + urlRetorno + "\">enlace</a>"
-                                                    );
-                    await _signInManager.SignInAsync(usuario, isPersistent: false);  // Manejador de autenticación del Framework de Identidad (Identity)
-                    //return LocalRedirect(returnurl);
-                    return RedirectToAction("Index", "Home");
+                    await _emailSender.SendEmailAsync(registroViewModel.Email, "Confirmar su cuenta - WebApplicationsEmployess", "Por favor confirme su cuenta dando click aquí: <a href=\"" + urlRetorno + "\">enlace</a>");
+                    await _signInManager.SignInAsync(usuario, isPersistent: false);  // Manejador de autenticación del Framework de Identidad (Identity)                 
+                    return LocalRedirect(returnurl);
+                    //return RedirectToAction("Index", "Home");
                 }
                 ValidarErrores(resultado);
             }
