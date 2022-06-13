@@ -22,7 +22,6 @@ namespace WebApplication.Monolito01.Controllers
             _emailSender = emailSender;
         }
 
-
         [HttpGet]
         [AllowAnonymous]
         public IActionResult Index()
@@ -47,7 +46,6 @@ namespace WebApplication.Monolito01.Controllers
         {
             ViewData["ReturnUrl"] = returnurl;
             returnurl = returnurl ?? Url.Content("~/");
-
 
             if (ModelState.IsValid)
             {
@@ -118,6 +116,181 @@ namespace WebApplication.Monolito01.Controllers
             return View(resultado.Succeeded ? "ConfirmarEmail" : "Error");
         }
 
-      
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult Login(string? returnurl = null)
+        {
+            ViewData["ReturnUrl"] = returnurl;
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [AllowAnonymous]
+        public async Task<IActionResult> Login(LoginViewModel accViewModel, string? returnurl = null)
+        {
+            ViewData["ReturnUrl"] = returnurl;
+            returnurl = returnurl ?? Url.Content("~/");
+            if (ModelState.IsValid)
+            {
+                var resultado = await _signInManager.PasswordSignInAsync(accViewModel.Email, accViewModel.Password, accViewModel.RememberMe, lockoutOnFailure: true);
+
+                if (resultado.Succeeded)
+                {
+                    //return RedirectToAction("Index", "Home");
+                    return LocalRedirect(returnurl);
+                }
+                if (resultado.IsLockedOut)
+                {
+                    return View("Bloqueado");
+                }
+                //Para autenticación de dos factores
+                if (resultado.RequiresTwoFactor)
+                {
+                    return RedirectToAction(nameof(VerificarCodigoAutenticador), new { returnurl, accViewModel.RememberMe });
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, "Acceso inválido");
+                    return View(accViewModel);
+                }
+            }
+
+            return View(accViewModel);
+        }
+
+        //Salir o cerrar sesión de la aplicacion (logout)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SalirAplicacion()
+        {
+            await _signInManager.SignOutAsync();
+            return RedirectToAction(nameof(HomeController.Index), "Home");
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> VerificarCodigoAutenticador(bool recordarDatos, string returnurl = null)
+        {
+            var usuario = await _signInManager.GetTwoFactorAuthenticationUserAsync();
+            if (usuario == null)
+            {
+                return View("Error");
+            }
+
+            ViewData["ReturnUrl"] = returnurl;
+            return View(new VerificarAutenticadorViewModel { ReturnUrl = returnurl, RecordarDatos = recordarDatos });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [AllowAnonymous]
+        public async Task<IActionResult> VerificarCodigoAutenticador(VerificarAutenticadorViewModel vaViewModel)
+        {
+            vaViewModel.ReturnUrl = vaViewModel.ReturnUrl ?? Url.Content("~/");
+            if (!ModelState.IsValid)
+            {
+                return View(vaViewModel);
+            }
+
+            var resultado = await _signInManager.TwoFactorAuthenticatorSignInAsync(vaViewModel.Code, vaViewModel.RecordarDatos, rememberClient: true);
+            if (resultado.Succeeded)
+            {
+                return LocalRedirect(vaViewModel.ReturnUrl);
+            }
+            if (resultado.IsLockedOut)
+            {
+                return View("Bloqueado");
+            }
+            else
+            {
+                ModelState.AddModelError(string.Empty, "Código Inválido");
+                return View(vaViewModel);
+            }
+        }
+
+        //Método para olvido de contraseña
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult OlvidoPassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [AllowAnonymous]
+        public async Task<IActionResult> OlvidoPassword(OlvidoPasswordViewModel opViewModel)
+        {
+            if (ModelState.IsValid)
+            {
+                var usuario = await _userManager.FindByEmailAsync(opViewModel.Email);
+                if (usuario == null)
+                {
+                    return RedirectToAction("ConfirmacionOlvidoPassword");
+                }
+
+                var codigo = await _userManager.GeneratePasswordResetTokenAsync(usuario);
+                var urlRetorno = Url.Action("ResetPassword", "Cuentas", new { userId = usuario.Id, code = codigo }, protocol: HttpContext.Request.Scheme);
+
+                await _emailSender.SendEmailAsync(opViewModel.Email, "Recuperar contraseña - Proyecto Identity",
+                    "Por favor recupere su contraseña dando click aquí: <a href=\"" + urlRetorno + "\">enlace</a>");
+
+                return RedirectToAction("ConfirmacionOlvidoPassword");
+            }
+
+            return View(opViewModel);
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ConfirmacionOlvidoPassword()
+        {
+            return View();
+        }
+
+
+        //Funcionalidad para recuperar contraseña
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ResetPassword(string code = null)
+        {
+            return code == null ? View("Error") : View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [AllowAnonymous]
+        public async Task<IActionResult> ResetPassword(RecuperaPasswordViewModel rpViewModel)
+        {
+            if (ModelState.IsValid)
+            {
+                var usuario = await _userManager.FindByEmailAsync(rpViewModel.Email);
+                if (usuario == null)
+                {
+                    return RedirectToAction("ConfirmacionRecuperaPassword");
+                }
+
+                var resultado = await _userManager.ResetPasswordAsync(usuario, rpViewModel.Code, rpViewModel.Password);
+                if (resultado.Succeeded)
+                {
+                    return RedirectToAction("ConfirmacionRecuperaPassword");
+                }
+
+
+                ValidarErrores(resultado);
+            }
+
+            return View(rpViewModel);
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ConfirmacionRecuperaPassword() 
+        {
+            return View(); 
+        }
+
     }
 }
