@@ -5,6 +5,8 @@ using WebApplication.Monolito01.Models;
 
 namespace WebApplication.Monolito01.Controllers
 {
+    // 1. Restricciones a nivel de controlador
+    [Authorize]
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
@@ -14,17 +16,20 @@ namespace WebApplication.Monolito01.Controllers
             _logger = logger;
         }
 
+        [AllowAnonymous]
         public IActionResult Index()
         {
             return View();
         }
 
-        [Authorize]
+
+        // 1. Restricciones a nivel de acción
         public IActionResult Privacy()
         {
             return View();
         }
 
+        [AllowAnonymous]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
