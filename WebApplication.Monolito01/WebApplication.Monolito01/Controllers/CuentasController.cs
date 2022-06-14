@@ -86,7 +86,7 @@ namespace WebApplication.Monolito01.Controllers
                 if (resultado.Succeeded)
                 {
                     // Agregar el usuario a rol por defecto
-                    await _userManager.AddToRoleAsync(usuario, "Administrador");
+                    await _userManager.AddToRoleAsync(usuario, "Registrado");
 
                     // Confirmación por email...
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(usuario);
